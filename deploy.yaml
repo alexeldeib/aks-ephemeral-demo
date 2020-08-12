@@ -1,0 +1,66 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jobfile
+  labels:
+    app: demo
+data:
+  job: |
+    [global]
+    name=fio-rand-RW
+    ioengine=libaio
+    rw=randrw
+    rwmixread=60
+    bs=1k
+    direct=1
+    time_based=1
+    runtime=60
+    iodepth=16
+    size=4G
+    numjobs=6
+
+    [file]
+    filename=testfile
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &name demo
+  labels:
+    app: *name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: *name
+  template:
+    metadata:
+      labels:
+        app: *name
+    spec:
+      containers:
+      - image: alexeldeib/demo:latest
+        name: writer
+        imagePullPolicy: Always
+        command: ["/entrypoint.sh"]
+        env:
+        - name: JOBFILE
+          value: "/job/job"
+        resources: {}
+        volumeMounts:
+        - name: job
+          mountPath: /job
+        securityContext:
+          privileged: true
+          capabilities:
+            add: ["SYS_PTRACE", "SYS_RAWIO"]
+      - image: alexeldeib/demo:latest
+        name: monitor
+        imagePullPolicy: Always
+        command: ["iostat", "-ty", "1"]
+        resources: {}
+      volumes:
+      - name: job
+        configMap:
+          name: jobfile
