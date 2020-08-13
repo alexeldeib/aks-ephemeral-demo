@@ -20,10 +20,11 @@ echo -e "${COLOR}To avoid colored output, set PLAINTEXT=y${NOCOLOR}"
 echo -e "${COLOR}e.g. PLAINTEXT=y ./hack/demo.sh${NOCOLOR}"
 echo ""
 echo -e "${COLOR}This demo deploys an AKS cluster with ephemeral os,${NOCOLOR}"
-echo -e "${COLOR}docker root on temp disk, and containerd.          ${NOCOLOR}"
+echo -e "${COLOR}ubuntu 18.04 and containerd.          ${NOCOLOR}"
 echo -e "${COLOR}You can use this command to create such a cluster: ${NOCOLOR}"
 echo -e '
- az aks create -g ${GROUP} -n ${GROUP} \
+az group create -g "${GROUP}" -n "${GROUP}" -l ${LOCATION}
+az aks create -g ${GROUP} -n ${GROUP} \
     -l ${LOCATION} \
     -c 3 \
     -k 1.17.7 \
@@ -34,25 +35,28 @@ echo -e '
     --load-balancer-sku standard \
     --enable-managed-identity \
     --enable-node-public-ip \
-    --aks-custom-headers "EnableEphemeralOSDisk=true,ContainerRuntime=containerd"'
+    --aks-custom-headers "EnableEphemeralOSDisk=true,ContainerRuntime=containerd,CustomizedUbuntu=aks-ubuntu-1804"'
 echo -e "${COLOR}${NOCOLOR}"
 echo -e "${COLOR}Additionally, you must have kubectl installed.${NOCOLOR}"
 echo -e "${COLOR}${NOCOLOR}"
 
-# az aks create -g "${GROUP}" -n "${GROUP}" \
-#     -l australiaeast \
-#     -c 3 \
-#     -k 1.17.7 \
-#     --node-osdisk-size 64 \
-#     --node-vm-size Standard_D8s_v3 \
-#     --network-plugin azure \
-#     --vm-set-type VirtualMachineScaleSets \
-#     --load-balancer-sku standard \
-#     --enable-managed-identity \
-#     --enable-node-public-ip \
-#     --aks-custom-headers "EnableEphemeralOSDisk=true,ContainerRuntime=containerd,CustomizedUbuntu=aks-ubuntu-1804"
+echo -e "${COLOR}Provisioning resource group and AKS cluster${NOCOLOR}"
 
-# az aks get-credentials -g "${GROUP}" -n "${GROUP}"
+az group create -g "${GROUP}" -n "${GROUP}" -l australiaeast
+az aks create -g "${GROUP}" -n "${GROUP}" \
+    -l australiaeast \
+    -c 3 \
+    -k 1.17.7 \
+    --node-osdisk-size 64 \
+    --node-vm-size Standard_D8s_v3 \
+    --network-plugin azure \
+    --vm-set-type VirtualMachineScaleSets \
+    --load-balancer-sku standard \
+    --enable-managed-identity \
+    --enable-node-public-ip \
+    --aks-custom-headers "EnableEphemeralOSDisk=true,ContainerRuntime=containerd,CustomizedUbuntu=aks-ubuntu-1804"
+
+az aks get-credentials -g "${GROUP}" -n "${GROUP}"
 
 sleep 3
 
@@ -98,6 +102,8 @@ echo "POD NAME: $NAME"
 
 echo -e "${COLOR}Press any key to stop the logs ${NOCOLOR}"
 
+sleep 3
+
 kubectl logs -c monitor $NAME -f &
 
 sleep 3
@@ -108,7 +114,7 @@ pkill kubectl
 
 echo -e "${COLOR}As we can see, this far exceeds the IOPS limit for a 64 GB disk${NOCOLOR}"
 echo -e "${COLOR}This would normally be a P10, limited to 500 IOPS.${NOCOLOR}"
-echo -e "${COLOR}In the demo, we're able to reach ~8-10x that number."
+echo -e "${COLOR}In the demo, we're able to reach ~8-10x that number.${NOCOLOR}"
 echo -e "${COLOR}We should be able to max out the VM by tuning the workload.${NOCOLOR}"
 echo -e "${COLOR}This is thanks to ephemeral OS and temp disk, allowing us to max out the VM SKU limits.${NOCOLOR}"
 

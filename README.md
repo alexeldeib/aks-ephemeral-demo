@@ -1,3 +1,3 @@
-# AKS Ephemeral OS + Containerd + Docker on Temp Disk Demo
+# AKS Ephemeral OS + Containerd + Ubuntu 18.04
 
 [![asciicast](https://asciinema.org/a/Gfeoi1g7QpzCFnaL9TaWsnKVl.svg)](https://asciinema.org/a/Gfeoi1g7QpzCFnaL9TaWsnKVl)
